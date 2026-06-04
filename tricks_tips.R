@@ -1,7 +1,7 @@
 # Script containing various tips and tricks in terra and related packages
 # Author: Dawn Nekorchuk
 # Created: 2026-06-02
-# Last Modified: 2026-06-02
+# Last Modified: 2026-06-03
 
 if (!require("pacman")) {
   install.packages("pacman")
@@ -15,16 +15,15 @@ pacman::p_load(
   sf,
   #weird map demos
   ggnewscale,
-  #other maps stuff
-  viridis,
-  ggspatial,
-  #general data, ggplot
+  #general data, plotting
   tidyverse,
-  stringr
+  stringr,
+  viridis
 )
 
 ### Notes ----------------------------------------------------------------------
 
+# Good reference:
 # https://rspatial.org/
 
 ### Data -----------------------------------------------------------------------
@@ -46,7 +45,7 @@ r3 <- terra::crop(r3, r, mask = TRUE) # only cells where data existed in r
 # if-else logic for spatial data
 
 ie1 <- terra::ifel(r > 300, -r, r) # same raster
-ie2 <- terra::ifel(r > 400, r1, r2) # other rasters
+ie2 <- terra::ifel(r > 400, r1, r2) # other rasters - extents must match!
 
 # Can nest/chain, but gets slow on large rasters quickly
 # If you are working with large rasters, probably best to do one step at a time
@@ -365,7 +364,7 @@ ct_m %>%
 #  forced R to manually create a vat.dbf
 #  (which the author of terra discourages for some reason)
 
-### writeRaster(), large data, compression, NA  =-------------------------------
+### writeRaster(), large data, compression, NA  --------------------------------
 
 folder_write <- file.path("data", "writing_demo")
 dir.create(folder_write)
