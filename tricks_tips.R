@@ -1,18 +1,16 @@
 # Script containing various tips and tricks in terra and related packages
 # Author: Dawn Nekorchuk
 # Created: 2026-06-02
-# Last Modified: 2026-06-03
+# Last Modified: 2026-06-04
 
 if (!require("pacman")) {
   install.packages("pacman")
 }
 pacman::p_load(
   terra,
+  sf,
   #better ggplot with terra
   tidyterra,
-  #background / basemaps
-  basemaps,
-  sf,
   #weird map demos
   ggnewscale,
   #general data, plotting
@@ -26,6 +24,11 @@ pacman::p_load(
 # Good reference:
 # https://rspatial.org/
 
+### Not NA ---------------------------------------------------------------------
+
+#terra::not.na()
+#avoids !is.na()
+
 ### Data -----------------------------------------------------------------------
 
 f <- system.file("ex/elev.tif", package = "terra")
@@ -36,7 +39,7 @@ plot(r)
 # Create a bunch of rasters with single values for later use
 # All do similar things, just demonstrating multiple ways of accomplishing this
 r1 <- terra::classify(r, cbind(-Inf, Inf, 1))
-r2 <- terra::ifel(!is.na(r), 2, NA)
+r2 <- terra::ifel(terra::not.na(r), 2, NA)
 r3 <- terra::init(r, 3) # all cells, whether NA or not
 r3 <- terra::crop(r3, r, mask = TRUE) # only cells where data existed in r
 
@@ -110,12 +113,12 @@ p_cm +
     na.value = NA,
     limits = c(1, ncell(large_r))
   ) +
-  sf::coord_sf(expand = FALSE)
+  ggplot2::coord_sf(expand = FALSE)
 
 p_cm +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = c1) +
-  ggplot2::scale_fill_viridis(
+  viridis::scale_fill_viridis(
     option = "magma",
     na.value = NA,
     limits = c(1, terra::ncell(large_r))
@@ -165,13 +168,13 @@ t2 <- terra::rast(grep(files_to_merge, pattern = "tile_2\\.", value = TRUE))
 t5 <- terra::rast(grep(files_to_merge, pattern = "tile_5\\.", value = TRUE))
 (p_tiles <- ggplot2::ggplot() +
   tidyterra::geom_spatraster(data = t1) +
-  ggplot2::scale_fill_viridis(option = "mako", na.value = NA) +
+  viridis::scale_fill_viridis(option = "mako", na.value = NA) +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = t2) +
   viridis::scale_fill_viridis(option = "inferno", na.value = NA, ) +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = t5) +
-  ggplot2::scale_fill_viridis(option = "turbo", na.value = NA, ) +
+  viridis::scale_fill_viridis(option = "turbo", na.value = NA, ) +
   ggplot2::coord_sf(expand = FALSE))
 p_tiles +
   ggnewscale::new_scale_fill() +
@@ -189,7 +192,7 @@ tile_sprc
 #  read in the files as you want them to be mosaicked.
 tile_sprc[1]
 plot(tile_sprc[1])
-tile_sprc[1] <- tile_sprc[4]
+tile_sprc[1] <- tile_sprc[4] # doesn't work!
 
 # mosaic via merge algo 2
 # DEFAULT algo is 1 which resamples! Be careful
@@ -203,9 +206,9 @@ plot(whole_again)
 ### selectRange() --------------------------------------------------------------
 
 #make some new data real quick
-r11 <- terra::ifel(!is.na(r), 11, NA)
-r22 <- terra::ifel(!is.na(r), 22, NA)
-r33 <- terra::ifel(!is.na(r), 33, NA)
+r11 <- terra::ifel(terra::not.na(r), 11, NA)
+r22 <- terra::ifel(terra::not.na(r), 22, NA)
+r33 <- terra::ifel(terra::not.na(r), 33, NA)
 
 # Say we have a complicated set of logic to combine data from multiple sources
 #  If we pre-compute the logic and create a essentially a look-up table as a raster
@@ -341,9 +344,9 @@ a_lookup <- tibble::tribble(
          3 , "desc_3" ,
          4 , "desc_4"
 )
-terra::levels(rr_a)
-terra::levels(rr_a) <- a_lookup
-terra::levels(rr_a)
+levels(rr_a)
+levels(rr_a) <- a_lookup
+levels(rr_a)
 rr_a
 plot(rr_a)
 
@@ -363,6 +366,9 @@ ct_m %>%
 # I have not yet found a way to get QGIS to play with the .aux.xml or
 #  forced R to manually create a vat.dbf
 #  (which the author of terra discourages for some reason)
+
+# Use foreign package to create .vat.dbf! -Bryan
+# color table column signed integers
 
 ### writeRaster(), large data, compression, NA  --------------------------------
 
@@ -525,7 +531,7 @@ exactextractr::exact_extract(
   fun = "mean",
   append_cols = c("id", "poly_name")
 ) %>%
-  tibble::as.tibble()
+  tibble::as_tibble()
 
 #multiple extractions at the same time!
 exactextractr::exact_extract(
@@ -567,7 +573,7 @@ exactextractr::exact_extract(
   )) %>%
   #clean up names from freq_frac_n to just freq_n
   dplyr::rename_with(function(n) sub("_frac_", "_", n)))
-#Grab just the frequencies and pivot wide
+#Grab just the frequencies and pivot long
 ex_fq %>%
   dplyr::select(id, poly_name, dplyr::starts_with("freq_")) %>%
   tidyr::pivot_longer(
