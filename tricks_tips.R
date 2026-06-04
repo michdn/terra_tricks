@@ -82,7 +82,7 @@ sessionInfo()
 # quick data set up, large raster
 large_r <- terra::extend(r, c(1000, 1000))
 plot(large_r)
-values(large_r) <- 1:ncell(large_r)
+values(large_r) <- 1:terra::ncell(large_r)
 plot(large_r, col = map.pal("magma", 100))
 
 # crop() cuts one raster by EXTENT of a second raster
@@ -98,30 +98,30 @@ plot(large_r, col = map.pal("magma", 100))
 c1_step1 <- terra::crop(large_r, r)
 c1 <- terra::crop(c1_step1, r, mask = TRUE)
 
-(p_cm <- ggplot() +
+(p_cm <- ggplot2::ggplot() +
   tidyterra::geom_spatraster(data = large_r) +
-  scale_fill_viridis(option = "magma", alpha = 0.5) +
-  coord_sf(expand = FALSE))
+  viridis::scale_fill_viridis(option = "magma", alpha = 0.5) +
+  ggplot2::coord_sf(expand = FALSE))
 
 p_cm +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = c1_step1) +
-  scale_fill_viridis(
+  viridis::scale_fill_viridis(
     option = "magma",
     na.value = NA,
     limits = c(1, ncell(large_r))
   ) +
-  coord_sf(expand = FALSE)
+  sf::coord_sf(expand = FALSE)
 
 p_cm +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = c1) +
-  scale_fill_viridis(
+  ggplot2::scale_fill_viridis(
     option = "magma",
     na.value = NA,
-    limits = c(1, ncell(large_r))
+    limits = c(1, terra::ncell(large_r))
   ) +
-  coord_sf(expand = FALSE)
+  ggplot2::coord_sf(expand = FALSE)
 
 plot(c1, col = map.pal("magma", 100))
 plot(r)
@@ -164,21 +164,21 @@ terra::makeTiles(
 t1 <- terra::rast(grep(files_to_merge, pattern = "tile_1\\.", value = TRUE))
 t2 <- terra::rast(grep(files_to_merge, pattern = "tile_2\\.", value = TRUE))
 t5 <- terra::rast(grep(files_to_merge, pattern = "tile_5\\.", value = TRUE))
-(p_tiles <- ggplot() +
+(p_tiles <- ggplot2::ggplot() +
   tidyterra::geom_spatraster(data = t1) +
-  scale_fill_viridis(option = "mako", na.value = NA) +
+  ggplot2::scale_fill_viridis(option = "mako", na.value = NA) +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = t2) +
-  scale_fill_viridis(option = "inferno", na.value = NA, ) +
+  viridis::scale_fill_viridis(option = "inferno", na.value = NA, ) +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = t5) +
-  scale_fill_viridis(option = "turbo", na.value = NA, ) +
-  coord_sf(expand = FALSE))
+  ggplot2::scale_fill_viridis(option = "turbo", na.value = NA, ) +
+  ggplot2::coord_sf(expand = FALSE))
 p_tiles +
   ggnewscale::new_scale_fill() +
   tidyterra::geom_spatraster(data = large_r) +
-  scale_fill_viridis(option = "magma", alpha = 0.25) +
-  coord_sf(expand = FALSE)
+  viridis::scale_fill_viridis(option = "magma", alpha = 0.25) +
+  ggplot2::coord_sf(expand = FALSE)
 
 # Sprc is useful here (but annoyingly limited)
 # spatial raster collection does NOT need to have the same extent, origin, etc.
@@ -217,7 +217,7 @@ r33 <- terra::ifel(!is.na(r), 33, NA)
 #  as represented by r11, r22, and r33 above.
 # Pretend for a moment that treatment selection was based on elevation:
 #  First, set up a quick reclass matrix
-elev_rcl <- tribble(
+elev_rcl <- tibble::tribble(
   ~to , ~from , ~becomes ,
     0 ,   300 ,        1 ,
   300 ,   400 ,        2 ,
@@ -246,16 +246,16 @@ plot(stitched)
 
 # quick data set up, with random data
 rr_a <- r
-values(rr_a) <- sample(1:4, ncell(r), TRUE) #random integers between 1 and 4
-rr_a <- crop(rr_a, r, mask = TRUE) # only cells where data existed in r
+values(rr_a) <- sample(1:4, terra::ncell(r), TRUE) #random integers between 1 and 4
+rr_a <- terra::crop(rr_a, r, mask = TRUE) # only cells where data existed in r
 names(rr_a) <- "rr_a"
 rr_b <- r
-values(rr_b) <- sample(1:9, ncell(r), TRUE) #random integers between 1 and 9
+values(rr_b) <- sample(1:9, terra::ncell(r), TRUE) #random integers between 1 and 9
 names(rr_b) <- "rr_b"
 # Note: rr_b has data in full extent, so more than just what is present in r
 rr_c <- r
-values(rr_c) <- sample(1:50, ncell(r), TRUE) #random integers between 1 and 50
-rr_c <- crop(rr_c, r, mask = TRUE) # only cells where data existed in r
+values(rr_c) <- sample(1:50, terra::ncell(r), TRUE) #random integers between 1 and 50
+rr_c <- terra::crop(rr_c, r, mask = TRUE) # only cells where data existed in r
 names(rr_c) <- "rr_c"
 
 
@@ -270,7 +270,7 @@ terra::freq(c(rr_a, rr_b)) %>% tibble::as_tibble()
 #  warning: gets slow if you have a large raster
 (ct_ab2 <- terra::crosstab(c(rr_a, rr_b), long = TRUE, useNA = TRUE) %>%
   tibble::as_tibble())
-ct_ab2 %>% filter(is.na(rr_a))
+ct_ab2 %>% dplyr::filter(is.na(rr_a))
 
 ## 'Manual' crosstab
 # By the time you are adding three or four layers if they are moderately large,
@@ -298,7 +298,7 @@ encoded <-
   rr_c99       *    1
 # rr_a and rr_b are given 1 digit of space, and stitched 2!
 plot(encoded)
-global(encoded, fun = "range")
+terra::global(encoded, fun = "range")
 # note that there is a different number of digits,
 #  depending on value of rr_a0 (0 = NA)
 
@@ -319,7 +319,7 @@ global(encoded, fun = "range")
     widths = c("a" = 1, "b" = 1, "c" = 2),
     cols_remove = FALSE
   ) %>%
-  dplyr::select(count, value, encoded_value, everything()))
+  dplyr::select(count, value, encoded_value, tidyr::everything()))
 
 # convert back to number and/or decode the NAs if wanted
 (ct_m <- ct_m %>%
@@ -342,9 +342,9 @@ a_lookup <- tibble::tribble(
          3 , "desc_3" ,
          4 , "desc_4"
 )
-levels(rr_a)
-levels(rr_a) <- a_lookup
-levels(rr_a)
+terra::levels(rr_a)
+terra::levels(rr_a) <- a_lookup
+terra::levels(rr_a)
 rr_a
 plot(rr_a)
 
@@ -353,7 +353,10 @@ plot(rr_a)
 
 # So back to our crosstab categories
 ct_m %>%
-  left_join(levels(rr_a)[[1]], by = join_by("a" == "a_value"))
+  dplyr::left_join(
+    terra::levels(rr_a)[[1]],
+    by = dplyr::join_by("a" == "a_value")
+  )
 
 # Saving out categorical rasters ....
 # It'll put the categories into an .aux.xml which R will read again
@@ -507,10 +510,10 @@ polys <- polys %>%
 polys
 
 #quick plot to see what we got
-ggplot() +
-  geom_spatraster(data = r) +
+ggplot2::ggplot() +
+  tidyterra::geom_spatraster(data = r) +
   tidyterra::scale_fill_hypso_c(name = "Elevation") +
-  geom_sf(data = polys, color = "blue", fill = NA, size = 2)
+  ggplot2::geom_sf(data = polys, color = "blue", fill = NA, size = 2)
 
 # terra has extract() function
 #  Can either be centroid (does cell centroid fall into polygon) OR
@@ -584,7 +587,7 @@ ex_fq %>%
 # Count from above gives us
 # "the sum of fractions of raster cells with non-NA values covered by the polygon"
 # So now we calculate from a raster of total possible pixels
-all_possible <- init(rr_a, 1)
+all_possible <- terra::init(rr_a, 1)
 #get total possible pixels per polygon
 (tot_poss <- exactextractr::exact_extract(
   all_possible,
@@ -626,7 +629,7 @@ for (i in 1:nrow(targets)) {
 
   this_target <- targets[i, ]
 
-  this_rast <- rast(this_target[["fullpath"]])
+  this_rast <- terra::rast(this_target[["fullpath"]])
 
   this_extract <- exactextractr::exact_extract(
     this_rast,
